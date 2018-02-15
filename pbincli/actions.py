@@ -1,11 +1,12 @@
 import json, hashlib, ntpath, os, sys
-import pbincli.actions, pbincli.sjcl_simple, pbincli.settings
+import pbincli.actions, pbincli.settings
 
 from base64 import b64encode, b64decode
 from mimetypes import guess_type
+from pbincli.sjcl import SJCL
 from pbincli.transports import privatebin
 from pbincli.utils import PBinCLIException, check_readable, check_writable, json_load_byteified
-
+from Crypto.Random import get_random_bytes
 
 # Initialise settings
 pbincli.settings.init()
@@ -28,7 +29,7 @@ def send(args):
     # Formatting request
     request = {'expire':args.expire,'formatter':args.format,'burnafterreading':int(args.burn),'opendiscussion':int(args.discus)}
 
-    salt = os.urandom(8)
+    salt = get_random_bytes(8)
     passphrase = b64encode(os.urandom(32))
     if args.debug: print("Passphrase:\t{}".format(passphrase))
 
@@ -42,7 +43,7 @@ def send(args):
     if args.debug: print("Password:\t{}".format(password))
 
     # Encrypting text (comment)
-    cipher = pbincli.sjcl_simple.encrypt(password, text, salt)
+    cipher = SJCL().encrypt(text, password, salt, 10000, 32)
     request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ','')
 
     # If we set FILE variable
@@ -122,7 +123,7 @@ def get(args):
 
         if args.debug: print("Text:\t{}\n".format(data))
 
-        text = pbincli.sjcl_simple.decrypt(password, data)
+        text = SJCL().decrypt(data, password)
         print("{}\n".format(text))
 
         check_writable("paste.txt")

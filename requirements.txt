@@ -1,8 +1,2 @@
-# cryptography dependecies
-appdirs
-cffi
-packaging
-pycparser
-# required packeges
-cryptography
+pycryptodome
 requests
